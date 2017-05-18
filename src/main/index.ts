@@ -31,13 +31,14 @@ export class OverviewGenerator implements apiset.Generator {
         });
 
         api.forEachEndpoint((endpoint) => {
-            if (endpoint.returnType) {
-                printEndpointHeading(`${apiset.requestMethodToString(endpoint.requestMethod)} ` +
-                    `"/${endpoint.url}" returns ${endpoint.returnType}`);
-            } else {
-                printEndpointHeading(`${apiset.requestMethodToString(endpoint.requestMethod)} ` +
-                    `"/${endpoint.url}"`);
-            }
+
+            let heading = `${apiset.requestMethodToString(endpoint.requestMethod)} ` +
+                `"/${endpoint.url}"`;
+
+            if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
+            if (endpoint.returnType) { heading += ` returns ${endpoint.returnType}`; }
+
+            printEndpointHeading(heading);
 
             printProperties(endpoint);
             print();
