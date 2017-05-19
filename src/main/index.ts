@@ -1,10 +1,10 @@
 
 import * as chalk from 'chalk';
-import * as apiset from 'apiset';
+import * as apiscript from 'apiscript';
 
-export class OverviewGenerator implements apiset.Generator {
+export class OverviewGenerator implements apiscript.Generator {
 
-    generate(api: apiset.API, config: apiset.Config) {
+    generate(api: apiscript.API, config: apiscript.Config) {
         print();
         printTitle(`API "/${api.name}"`);
         print();
@@ -32,7 +32,7 @@ export class OverviewGenerator implements apiset.Generator {
 
         api.forEachEndpoint((endpoint) => {
 
-            let heading = `${apiset.requestMethodToString(endpoint.requestMethod)} ` +
+            let heading = `${apiscript.requestMethodToString(endpoint.requestMethod)} ` +
                 `"/${endpoint.url}"`;
 
             if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
@@ -75,7 +75,7 @@ function printValue(message: string) {
     print(chalk.white.bold(`  ${message} `));
 }
 
-function printProperties(propertyHolder: apiset.Endpoint | apiset.Entity) {
+function printProperties(propertyHolder: apiscript.Endpoint | apiscript.Entity) {
 
     if (propertyHolder.propertyCount == 0) {
         printValue('-');
