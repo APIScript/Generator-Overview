@@ -32,7 +32,7 @@ export class OverviewGenerator implements apiscript.Generator {
 
         api.forEachEndpoint((endpoint) => {
 
-            let heading = `${apiscript.requestMethodToString(endpoint.requestMethod)} ` +
+            let heading = `${apiscript.RequestMethod[endpoint.requestMethod]} ` +
                 `"/${endpoint.url}"`;
 
             if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
