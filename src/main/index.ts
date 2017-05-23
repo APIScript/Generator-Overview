@@ -7,7 +7,7 @@ export class OverviewGenerator implements apiscript.Generator {
 
     generate(api: apiscript.API, config: apiscript.Config) {
         print();
-        printTitle(`API "/${api.name}"`);
+        printTitle(`API ${api.name}`);
         print();
 
         api.forEachEnum((enumerator) => {
@@ -32,9 +32,7 @@ export class OverviewGenerator implements apiscript.Generator {
         });
 
         api.forEachEndpoint((endpoint) => {
-
-            let heading = `${apiscript.RequestMethod[endpoint.requestMethod]} ` +
-                `"/${endpoint.url}"`;
+            let heading = `${apiscript.RequestMethod[endpoint.requestMethod]} ${endpoint.url}`;
 
             if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
             if (endpoint.returnType) { heading += ` returns ${endpoint.returnType}`; }
@@ -105,10 +103,10 @@ function propertyTypeToString(type: PropertyType): string {
     if (type.asPrimitive) {
         let primitive = type.asPrimitive;
 
-        if (primitive.asInteger) { return 'Integer'; }
-        if (primitive.asFloat) { return 'Float'; }
-        if (primitive.asBoolean) { return 'Boolean'; }
-        if (primitive.asString) { return 'String'; }
+        if (primitive.asInteger) { return 'integer'; }
+        if (primitive.asFloat) { return 'float'; }
+        if (primitive.asBoolean) { return 'boolean'; }
+        if (primitive.asString) { return 'string'; }
 
     } else if (type.asCollection) {
         let collection = type.asCollection;
