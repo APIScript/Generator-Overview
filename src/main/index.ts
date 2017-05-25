@@ -1,11 +1,10 @@
 
 import * as chalk from "chalk";
-import * as apiscript from "apiscript";
-import {PropertyType} from "apiscript";
+import {Config, Generator, API, PropertyType, RequestMethod, Property} from "apiscript";
 
-export class OverviewGenerator implements apiscript.Generator {
+export class OverviewGenerator implements Generator {
 
-    generate(api: apiscript.API, config: apiscript.Config) {
+    generate(api: API, config: Config) {
         print();
         printTitle(`API ${api.name}`);
         print();
@@ -27,19 +26,18 @@ export class OverviewGenerator implements apiscript.Generator {
                 printEntityHeading(`Entity ${entity.name}`);
             }
 
-            printProperties(entity);
+            printPropertyType(entity.closure);
             print();
         });
 
         api.forEachEndpoint((endpoint) => {
-            let heading = `${apiscript.RequestMethod[endpoint.requestMethod]} ${endpoint.url}`;
-
-            if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
-            if (endpoint.returnType) { heading += ` returns ${endpoint.returnType}`; }
-
+            let heading = `${RequestMethod[endpoint.requestMethod]} ${endpoint.url}`;
             printEndpointHeading(heading);
 
-            printProperties(endpoint);
+            if (endpoint.requestType) { printPropertyType(endpoint.requestType); }
+            if (endpoint.bodyType) { printPropertyType(endpoint.bodyType); }
+            if (endpoint.responseType) { printPropertyType(endpoint.responseType); }
+
             print();
         });
     }
@@ -70,32 +68,31 @@ function printValue(message: string) {
     print(chalk.white.bold(`  ${message} `));
 }
 
-function printProperties(propertyHolder: apiscript.Endpoint | apiscript.Entity) {
+function printProperty(property: Property) {
+    printValue(propertyToString(property));
+}
 
-    if (propertyHolder.propertyCount == 0) {
-        printValue('-');
-    } else {
-        propertyHolder.forEachProperty((property) => {
+function printPropertyType(type: PropertyType) {
+    printValue(propertyTypeToString(type));
+}
 
-            let message = '';
-            if (property.isOptional) { message += `Optional `; }
+function propertyToString(property: Property): string {
+    let message = '';
+    if (property.isOptional) { message += `Optional `; }
 
-            message += `${property.name} `;
-            message += `${propertyTypeToString(property.type)}`;
+    message += `${property.name} ${propertyTypeToString(property.type)}`;
 
-            if (property.defaultValue) {
-
-                if (property.type.asPrimitive && property.type.asPrimitive.asString) {
-                    message += ` = "${property.defaultValue}"`;
-                } else {
-                    message += ` = ${property.defaultValue}`;
-                }
-            }
-
-            if (property.constraints) { message += ` (${property.constraints})`; }
-            printValue(message);
-        });
+    if (property.defaultValue) {
+        if (property.type.asPrimitive && property.type.asPrimitive.asString) {
+            message += ` = "${property.defaultValue}"`;
+        } else {
+            message += ` = ${property.defaultValue}`;
+        }
     }
+
+    if (property.constraints) { message += ` (${property.constraints})`; }
+
+    return message;
 }
 
 function propertyTypeToString(type: PropertyType): string {
@@ -130,12 +127,12 @@ function propertyTypeToString(type: PropertyType): string {
         return type.asCustom.type;
 
     } else if (type.asClosure) {
-        let properties = type.asClosure.properties;
+        let closure = type.asClosure;
         let result = '{ ';
 
-        properties.forEach((property, index) => {
-            result += property.name + ': ' + propertyTypeToString(property.type);
-            if (index < properties.length - 1) { result += ', '; }
+        closure.forEachProperty((property, index) => {
+            result += propertyToString(property);
+            if (index < closure.propertyCount - 1) { result += ', '; }
         });
 
         result += ' }';
