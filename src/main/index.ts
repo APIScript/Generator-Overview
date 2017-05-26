@@ -1,12 +1,12 @@
 
-import * as chalk from 'chalk';
-import * as apiscript from 'apiscript';
+import * as chalk from "chalk";
+import {Config, Generator, API, PropertyType, RequestMethod, Property} from "apiscript";
 
-export class OverviewGenerator implements apiscript.Generator {
+export class OverviewGenerator implements Generator {
 
-    generate(api: apiscript.API, config: apiscript.Config) {
+    generate(api: API, config: Config) {
         print();
-        printTitle(`API "/${api.name}"`);
+        printTitle(`API ${api.name}`);
         print();
 
         api.forEachEnum((enumerator) => {
@@ -26,29 +26,22 @@ export class OverviewGenerator implements apiscript.Generator {
                 printEntityHeading(`Entity ${entity.name}`);
             }
 
-            printProperties(entity);
+            printPropertyType(entity.closure);
             print();
         });
 
         api.forEachEndpoint((endpoint) => {
-
-            let heading = `${apiscript.requestMethodToString(endpoint.requestMethod)} ` +
-                `"/${endpoint.url}"`;
-
-            if (endpoint.requestType) { heading += ` requests ${endpoint.requestType}`; }
-            if (endpoint.returnType) { heading += ` returns ${endpoint.returnType}`; }
-
+            let heading = `${RequestMethod[endpoint.requestMethod]} ${endpoint.url}`;
             printEndpointHeading(heading);
 
-            printProperties(endpoint);
+            if (endpoint.requestType) { printPropertyType(endpoint.requestType); }
+            if (endpoint.bodyType) { printPropertyType(endpoint.bodyType); }
+            if (endpoint.respondType) { printPropertyType(endpoint.respondType); }
+
             print();
         });
     }
 
-}
-
-function clear() {
-    print('\x1bc');
 }
 
 function print(message: any = '') {
@@ -75,31 +68,75 @@ function printValue(message: string) {
     print(chalk.white.bold(`  ${message} `));
 }
 
-function printProperties(propertyHolder: apiscript.Endpoint | apiscript.Entity) {
+function printProperty(property: Property) {
+    printValue(propertyToString(property));
+}
 
-    if (propertyHolder.propertyCount == 0) {
-        printValue('-');
-    } else {
-        propertyHolder.forEachProperty((property) => {
+function printPropertyType(type: PropertyType) {
+    printValue(propertyTypeToString(type));
+}
 
-            let message = '';
-            if (property.isOptional) { message += `Optional `; }
+function propertyToString(property: Property): string {
+    let message = '';
+    if (property.isOptional) { message += `Optional `; }
 
-            message += property.type;
-            message += ` ${property.name}`;
+    message += `${property.name} ${propertyTypeToString(property.type)}`;
 
-            if (property.defaultValue) {
+    if (property.defaultValue) {
+        if (property.type.asPrimitive && property.type.asPrimitive.asString) {
+            message += ` = "${property.defaultValue}"`;
+        } else {
+            message += ` = ${property.defaultValue}`;
+        }
+    }
 
-                if (property.type.isString) {
-                    message += ` = "${property.defaultValue}"`;
-                } else {
-                    message += ` = ${property.defaultValue}`;
-                }
-            }
+    if (property.constraints) { message += ` (${property.constraints})`; }
 
-            if (property.constraints) { message += ` (${property.constraints})`; }
-            printValue(message);
+    return message;
+}
+
+function propertyTypeToString(type: PropertyType): string {
+
+    if (type.asPrimitive) {
+        let primitive = type.asPrimitive;
+
+        if (primitive.asInteger) { return 'integer'; }
+        if (primitive.asFloat) { return 'float'; }
+        if (primitive.asBoolean) { return 'boolean'; }
+        if (primitive.asString) { return 'string'; }
+
+    } else if (type.asCollection) {
+        let collection = type.asCollection;
+
+        if (collection.asList) {
+            let list = collection.asList;
+            return `[${propertyTypeToString(list.type)}]`;
+        }
+
+        if (collection.asSet) {
+            let set = collection.asSet;
+            return `<${propertyTypeToString(set.type)}>`;
+        }
+
+        if (collection.asMap) {
+            let map = collection.asMap;
+            return `<${propertyTypeToString(map.keyType)} -> ${propertyTypeToString(map.keyType)}>`;
+        }
+
+    } else if (type.asCustom) {
+        return type.asCustom.type;
+
+    } else if (type.asClosure) {
+        let closure = type.asClosure;
+        let result = '{ ';
+
+        closure.forEachProperty((property, index) => {
+            result += propertyToString(property);
+            if (index < closure.propertyCount - 1) { result += ', '; }
         });
+
+        result += ' }';
+        return result;
     }
 }
 
