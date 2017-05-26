@@ -36,7 +36,7 @@ export class OverviewGenerator implements Generator {
 
             if (endpoint.requestType) { printPropertyType(endpoint.requestType); }
             if (endpoint.bodyType) { printPropertyType(endpoint.bodyType); }
-            if (endpoint.responseType) { printPropertyType(endpoint.responseType); }
+            if (endpoint.respondType) { printPropertyType(endpoint.respondType); }
 
             print();
         });
